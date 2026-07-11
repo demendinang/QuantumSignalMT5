@@ -13,9 +13,14 @@ private:
    string m_status;
    string m_trend;
    string m_market;
+
    double m_adx;
    double m_rsi;
-   int    m_score;
+
+   int m_score;
+
+   bool m_buy;
+   bool m_sell;
 
 public:
 
@@ -27,9 +32,13 @@ public:
       m_trend="UNKNOWN";
       m_market="UNKNOWN";
 
-      m_adx=0.0;
-      m_rsi=0.0;
+      m_adx=0;
+      m_rsi=0;
+
       m_score=0;
+
+      m_buy=false;
+      m_sell=false;
    }
 
    bool Create()
@@ -69,6 +78,8 @@ public:
       ObjectDelete(0,m_name);
    }
 
+   //--------------------------------------------------
+
    void SetStatus(string value)
    {
       m_status=value;
@@ -99,11 +110,23 @@ public:
       m_score=value;
    }
 
+   void SetBuySignal(bool value)
+   {
+      m_buy=value;
+   }
+
+   void SetSellSignal(bool value)
+   {
+      m_sell=value;
+   }
+
+   //--------------------------------------------------
+
    void Update()
    {
       string txt;
 
-      txt =
+      txt=
       "Quantum Signal MT5\n\n"
 
       +"Status : "+m_status+"\n"
@@ -116,7 +139,11 @@ public:
 
       +"RSI    : "+DoubleToString(m_rsi,1)+"\n"
 
-      +"Score  : "+IntegerToString(m_score);
+      +"Score  : "+IntegerToString(m_score)+"\n\n"
+
+      +"BUY    : "+(m_buy ? "YES" : "NO")+"\n"
+
+      +"SELL   : "+(m_sell ? "YES" : "NO");
 
       ObjectSetString(
          0,
