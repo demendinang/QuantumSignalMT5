@@ -3,7 +3,7 @@
 //|                        Quantum Signal MT5                        |
 //+------------------------------------------------------------------+
 #property copyright "Quantum Signal Project"
-#property version   "1.003"
+#property version   "1.004"
 #property strict
 
 #property indicator_chart_window
@@ -23,6 +23,7 @@
 #include "Include/Engine/ADXEngine.mqh"
 #include "Include/Engine/RSIEngine.mqh"
 #include "Include/Engine/MarketStateEngine.mqh"
+#include "Include/Engine/SignalScoreEngine.mqh"
 
 //------------------------------------------------------------------
 // Indicator Buffer
@@ -41,6 +42,10 @@ CATREngine ATR;
 CADXEngine ADX;
 CRSIEngine RSI;
 CMarketStateEngine MarketState;
+CSignalScoreEngine SignalScore;
+
+//------------------------------------------------------------------
+int gSignalScore = 0;
 
 //+------------------------------------------------------------------+
 //| Initialization                                                   |
@@ -51,49 +56,32 @@ int OnInit()
 
    Print("==========================================");
    Print(" Quantum Signal MT5");
-   Print(" Version : 1.003");
+   Print(" Version : 1.004");
    Print(" Status  : Initializing...");
    Print("==========================================");
 
    Objects.SetPrefix("QS_");
 
    if(!Dashboard.Create())
-   {
-      Print("Dashboard Initialize Failed");
       return(INIT_FAILED);
-   }
 
    if(!EMA.Initialize())
-   {
-      Print("EMA Initialize Failed");
       return(INIT_FAILED);
-   }
 
    if(!ATR.Initialize())
-   {
-      Print("ATR Initialize Failed");
       return(INIT_FAILED);
-   }
 
    if(!ADX.Initialize())
-   {
-      Print("ADX Initialize Failed");
       return(INIT_FAILED);
-   }
 
    if(!RSI.Initialize())
-   {
-      Print("RSI Initialize Failed");
       return(INIT_FAILED);
-   }
 
    Dashboard.SetStatus("READY");
 
    return(INIT_SUCCEEDED);
 }
 
-//+------------------------------------------------------------------+
-//| Deinitialization                                                 |
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
@@ -106,8 +94,6 @@ void OnDeinit(const int reason)
    Objects.DeleteAll();
 }
 
-//+------------------------------------------------------------------+
-//| Main Calculation                                                 |
 //+------------------------------------------------------------------+
 int OnCalculate(
    const int rates_total,
@@ -178,6 +164,17 @@ int OnCalculate(
       ema200,
       adx
    );
+
+   //--------------------------------------------------------------
+   // Signal Score
+   //--------------------------------------------------------------
+   gSignalScore =
+      SignalScore.Calculate(
+         MarketState.IsBull(),
+         MarketState.IsBear(),
+         adx,
+         rsi
+      );
 
    //--------------------------------------------------------------
    // Dashboard
