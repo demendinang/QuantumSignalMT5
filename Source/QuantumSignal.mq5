@@ -4,17 +4,18 @@
 //|                           Version 0.1                            |
 //+------------------------------------------------------------------+
 #property copyright "Quantum Signal Project"
-#property version   "0.10"
+#property version   "0.100"
 #property indicator_chart_window
 #property strict
 
 #include "Include/Dashboard.mqh"
+#include "Include/ObjectManager.mqh"
 
 //-------------------------------------------------------------------
-// Global Dashboard Object
+// Global Objects
 //-------------------------------------------------------------------
 CDashboard Dashboard;
-
+CObjectManager Objects;
 //+------------------------------------------------------------------+
 //| Custom indicator initialization                                 |
 //+------------------------------------------------------------------+
@@ -25,7 +26,7 @@ int OnInit()
    Print(" Version : 0.10");
    Print(" Status  : Initializing...");
    Print("==========================================");
-
+Objects.SetPrefix("QS_");
    if(!Dashboard.Create())
    {
       Print("Dashboard Create Failed");
@@ -43,8 +44,8 @@ int OnInit()
 void OnDeinit(const int reason)
 {
    Dashboard.Destroy();
+   Objects.DeleteAll();
 }
-
 //+------------------------------------------------------------------+
 //| Custom indicator calculation                                    |
 //+------------------------------------------------------------------+
