@@ -1,0 +1,14 @@
+# MQL5 compiled files
+*.ex5
+
+# Log files
+*.log
+
+# Backup files
+*.bak
+
+# Temporary files
+*.tmp
+
+# VS Code settings
+.vscode/
