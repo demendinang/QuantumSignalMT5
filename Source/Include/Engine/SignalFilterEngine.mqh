@@ -8,8 +8,8 @@ class CSignalFilterEngine
 {
 private:
 
-   bool m_buyPassed;
-   bool m_sellPassed;
+   bool   m_buyPassed;
+   bool   m_sellPassed;
 
    double m_minADX;
    double m_minATR;
@@ -57,6 +57,8 @@ public:
       bool bearMarket,
       bool bullTrend,
       bool bearTrend,
+      bool bullHTF,
+      bool bearHTF,
       double atr,
       double adx,
       double rsi,
@@ -65,12 +67,11 @@ public:
    {
       Reset();
 
-      //---------------------------------------------------------
-      // BUY FILTER
-      //---------------------------------------------------------
+      // BUY
       if(
             bullMarket
          && bullTrend
+         && bullHTF
          && adx >= m_minADX
          && atr >= m_minATR
          && rsi >= 50.0
@@ -81,12 +82,11 @@ public:
          m_buyPassed = true;
       }
 
-      //---------------------------------------------------------
-      // SELL FILTER
-      //---------------------------------------------------------
+      // SELL
       if(
             bearMarket
          && bearTrend
+         && bearHTF
          && adx >= m_minADX
          && atr >= m_minATR
          && rsi >= 30.0
@@ -109,7 +109,6 @@ public:
    {
       return m_sellPassed;
    }
-
 };
 
 #endif

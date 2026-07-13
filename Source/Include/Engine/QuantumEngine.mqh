@@ -15,6 +15,8 @@
 #include "SignalFilterEngine.mqh"
 #include "ArrowEngine.mqh"
 #include "AlertEngine.mqh"
+#include "PushEngine.mqh"
+#include "MTFEngine.mqh"
 
 #include "../Dashboard.mqh"
 
@@ -34,6 +36,8 @@ private:
    CSignalFilterEngine Filter;
    CArrowEngine        Arrow;
    CAlertEngine        Alert;
+   CPushEngine Push;
+   CMTFEngine MTF;
 
 public:
 
@@ -149,6 +153,8 @@ public:
 // SIGNAL FILTER
 //=====================================================
 
+bool bullHTF=MTF.IsBull();
+bool bearHTF=MTF.IsBear();
 Filter.Calculate(
    MarketState.IsBull(),
    MarketState.IsBear(),
@@ -156,12 +162,15 @@ Filter.Calculate(
    Trend.IsBull(),
    Trend.IsBear(),
 
+   bullHTF,
+   bearHTF,
+
    atr,
    adx,
    rsi,
-
    score
 );
+   
       Signal.Calculate(
          MarketState.IsBull(),
          MarketState.IsBear(),
@@ -190,6 +199,7 @@ Filter.Calculate(
          );
 
          Alert.Buy(signalBar);
+Push.Buy(signalBar);
       }
 
       //------------------------------------------------------
@@ -207,6 +217,7 @@ Filter.Calculate(
          );
 
          Alert.Sell(signalBar);
+Push.Sell(signalBar);
       }
 
       //------------------------------------------------------
