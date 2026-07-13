@@ -12,6 +12,7 @@
 #include "MarketStateEngine.mqh"
 #include "SignalScoreEngine.mqh"
 #include "SignalEngine.mqh"
+#include "ArrowEngine.mqh"
 
 #include "../Dashboard.mqh"
 
@@ -28,6 +29,7 @@ private:
    CMarketStateEngine  MarketState;
    CSignalScoreEngine  SignalScore;
    CSignalEngine       Signal;
+   CArrowEngine        Arrow;
 
 public:
 
@@ -144,6 +146,13 @@ public:
       //------------------------------------------------------
       // Dashboard
       //------------------------------------------------------
+
+      if(Signal.IsBuySignal())
+         Arrow.DrawBuy(iTime(_Symbol,_Period,1),iLow(_Symbol,_Period,1));
+
+      if(Signal.IsSellSignal())
+         Arrow.DrawSell(iTime(_Symbol,_Period,1),iHigh(_Symbol,_Period,1));
+
       dashboard.SetTrend(
          Trend.GetTrendText()
       );
