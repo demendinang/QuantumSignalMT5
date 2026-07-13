@@ -12,6 +12,7 @@
 #include "MarketStateEngine.mqh"
 #include "SignalScoreEngine.mqh"
 #include "SignalEngine.mqh"
+#include "SignalFilterEngine.mqh"
 #include "ArrowEngine.mqh"
 #include "AlertEngine.mqh"
 
@@ -30,6 +31,7 @@ private:
    CMarketStateEngine  MarketState;
    CSignalScoreEngine  SignalScore;
    CSignalEngine       Signal;
+   CSignalFilterEngine Filter;
    CArrowEngine        Arrow;
    CAlertEngine        Alert;
 
@@ -65,6 +67,9 @@ public:
    //---------------------------------------------------------
 
    void Update(CDashboard &dashboard)
+   //=====================================================
+// DATA LAYER
+//=====================================================
    {
       double ema20   = 0.0;
       double ema50   = 0.0;
@@ -86,6 +91,9 @@ public:
          EMA.EMA50(ema50) &&
          EMA.EMA200(ema200)
       )
+      //=====================================================
+// ANALYSIS LAYER
+//=====================================================
       {
          Trend.Calculate(
             ema20,
@@ -137,6 +145,23 @@ public:
       //------------------------------------------------------
       // Signal Engine
       //------------------------------------------------------
+      //=====================================================
+// SIGNAL FILTER
+//=====================================================
+
+Filter.Calculate(
+   MarketState.IsBull(),
+   MarketState.IsBear(),
+
+   Trend.IsBull(),
+   Trend.IsBear(),
+
+   atr,
+   adx,
+   rsi,
+
+   score
+);
       Signal.Calculate(
          MarketState.IsBull(),
          MarketState.IsBear(),
@@ -145,12 +170,19 @@ public:
          score
       );
 
+      //=====================================================
+// DECISION LAYER
+//=====================================================
       datetime signalBar=iTime(_Symbol,_Period,1);
 
       //------------------------------------------------------
       // BUY
       //------------------------------------------------------
-      if(Signal.IsBuySignal())
+      if(
+   Signal.IsBuySignal()
+   &&
+   Filter.BuyPassed()
+)
       {
          Arrow.DrawBuy(
             signalBar,
@@ -163,7 +195,11 @@ public:
       //------------------------------------------------------
       // SELL
       //------------------------------------------------------
-      if(Signal.IsSellSignal())
+     if(
+   Signal.IsSellSignal()
+   &&
+   Filter.SellPassed()
+)
       {
          Arrow.DrawSell(
             signalBar,
@@ -176,6 +212,9 @@ public:
       //------------------------------------------------------
       // Dashboard
       //------------------------------------------------------
+      //=====================================================
+// OUTPUT LAYER
+//=====================================================
       dashboard.SetTrend(
          Trend.GetTrendText()
       );
@@ -191,12 +230,22 @@ public:
       dashboard.SetScore(score);
 
       dashboard.SetBuySignal(
-         Signal.IsBuySignal()
-      );
+
+   Signal.IsBuySignal()
+   &&
+
+   Filter.BuyPassed()
+
+);
 
       dashboard.SetSellSignal(
-         Signal.IsSellSignal()
-      );
+
+   Signal.IsSellSignal()
+   &&
+
+   Filter.SellPassed()
+
+);
 
       dashboard.Update();
    }
