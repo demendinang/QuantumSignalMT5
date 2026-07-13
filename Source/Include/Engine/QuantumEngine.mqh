@@ -17,6 +17,7 @@
 #include "AlertEngine.mqh"
 #include "PushEngine.mqh"
 #include "MTFEngine.mqh"
+#include "SessionEngine.mqh"
 
 #include "../Dashboard.mqh"
 
@@ -38,6 +39,7 @@ private:
    CAlertEngine        Alert;
    CPushEngine Push;
    CMTFEngine MTF;
+   CSessionEngine Session;
 
 public:
 
@@ -152,9 +154,12 @@ public:
       //=====================================================
 // SIGNAL FILTER
 //=====================================================
+Session.Calculate();
 
-bool bullHTF=MTF.IsBull();
-bool bearHTF=MTF.IsBear();
+bool allowTrading = Session.AllowTrading();
+
+bool bullHTF = MTF.IsBull();
+bool bearHTF = MTF.IsBear();
 Filter.Calculate(
    MarketState.IsBull(),
    MarketState.IsBear(),
@@ -188,8 +193,8 @@ Filter.Calculate(
       // BUY
       //------------------------------------------------------
       if(
-   Signal.IsBuySignal()
-   &&
+   allowTrading &&
+   Signal.IsBuySignal() &&
    Filter.BuyPassed()
 )
       {
@@ -206,8 +211,8 @@ Push.Buy(signalBar);
       // SELL
       //------------------------------------------------------
      if(
-   Signal.IsSellSignal()
-   &&
+   allowTrading &&
+   Signal.IsSellSignal() &&
    Filter.SellPassed()
 )
       {
@@ -242,8 +247,9 @@ Push.Sell(signalBar);
 
       dashboard.SetBuySignal(
 
-   Signal.IsBuySignal()
-   &&
+   allowTrading &&
+
+   Signal.IsBuySignal() &&
 
    Filter.BuyPassed()
 
@@ -251,8 +257,9 @@ Push.Sell(signalBar);
 
       dashboard.SetSellSignal(
 
-   Signal.IsSellSignal()
-   &&
+   allowTrading &&
+
+   Signal.IsSellSignal() &&
 
    Filter.SellPassed()
 
