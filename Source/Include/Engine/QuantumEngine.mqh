@@ -1,5 +1,6 @@
-//+------------------------------------------------------------------+
+﻿//+------------------------------------------------------------------+
 //|                                               QuantumEngine.mqh  |
+//|                    Build 032 - Candle Countdown                  |
 //+------------------------------------------------------------------+
 #ifndef __QUANTUM_ENGINE_MQH__
 #define __QUANTUM_ENGINE_MQH__
@@ -37,11 +38,13 @@ private:
    CSignalFilterEngine Filter;
    CArrowEngine        Arrow;
    CAlertEngine        Alert;
-   CPushEngine Push;
-   CMTFEngine MTF;
-   CSessionEngine Session;
+   CPushEngine         Push;
+   CMTFEngine          MTF;
+   CSessionEngine      Session;
 
 public:
+
+   //--------------------------------------------------
 
    bool Initialize()
    {
@@ -60,7 +63,7 @@ public:
       return(true);
    }
 
-   //---------------------------------------------------------
+   //--------------------------------------------------
 
    void Release()
    {
@@ -70,13 +73,14 @@ public:
       RSI.Release();
    }
 
-   //---------------------------------------------------------
+   //--------------------------------------------------
 
    void Update(CDashboard &dashboard)
-   //=====================================================
-// DATA LAYER
-//=====================================================
    {
+      //=================================================
+      // DATA LAYER
+      //=================================================
+
       double ema20   = 0.0;
       double ema50   = 0.0;
       double ema200  = 0.0;
@@ -89,17 +93,15 @@ public:
 
       double rsi     = 0.0;
 
-      //------------------------------------------------------
+      //-------------------------------------------------
       // EMA
-      //------------------------------------------------------
+      //-------------------------------------------------
+
       if(
          EMA.EMA20(ema20) &&
          EMA.EMA50(ema50) &&
          EMA.EMA200(ema200)
       )
-      //=====================================================
-// ANALYSIS LAYER
-//=====================================================
       {
          Trend.Calculate(
             ema20,
@@ -108,28 +110,32 @@ public:
          );
       }
 
-      //------------------------------------------------------
+      //-------------------------------------------------
       // ATR
-      //------------------------------------------------------
+      //-------------------------------------------------
+
       ATR.Value(atr);
 
-      //------------------------------------------------------
+      //-------------------------------------------------
       // ADX
-      //------------------------------------------------------
+      //-------------------------------------------------
+
       ADX.GetValues(
          adx,
          plusDI,
          minusDI
       );
 
-      //------------------------------------------------------
+      //-------------------------------------------------
       // RSI
-      //------------------------------------------------------
+      //-------------------------------------------------
+
       RSI.Value(rsi);
 
-      //------------------------------------------------------
+      //-------------------------------------------------
       // Market State
-      //------------------------------------------------------
+      //-------------------------------------------------
+
       MarketState.Calculate(
          ema20,
          ema50,
@@ -137,10 +143,11 @@ public:
          adx
       );
 
-      //------------------------------------------------------
+      //-------------------------------------------------
       // Signal Score
-      //------------------------------------------------------
-      int score =
+      //-------------------------------------------------
+
+      int score=
          SignalScore.Calculate(
             MarketState.IsBull(),
             MarketState.IsBear(),
@@ -148,34 +155,49 @@ public:
             rsi
          );
 
-      //------------------------------------------------------
-      // Signal Engine
-      //------------------------------------------------------
-      //=====================================================
-// SIGNAL FILTER
-//=====================================================
-Session.Calculate();
+      //-------------------------------------------------
+      // Session
+      //-------------------------------------------------
 
-bool allowTrading = Session.AllowTrading();
+      Session.Calculate();
 
-bool bullHTF = MTF.IsBull();
-bool bearHTF = MTF.IsBear();
-Filter.Calculate(
-   MarketState.IsBull(),
-   MarketState.IsBear(),
+      bool allowTrading=
+         Session.AllowTrading();
 
-   Trend.IsBull(),
-   Trend.IsBear(),
+      //-------------------------------------------------
+      // HTF
+      //-------------------------------------------------
 
-   bullHTF,
-   bearHTF,
+      bool bullHTF=
+         MTF.IsBull();
 
-   atr,
-   adx,
-   rsi,
-   score
-);
-   
+      bool bearHTF=
+         MTF.IsBear();
+
+      //-------------------------------------------------
+      // Filter
+      //-------------------------------------------------
+
+      Filter.Calculate(
+         MarketState.IsBull(),
+         MarketState.IsBear(),
+
+         Trend.IsBull(),
+         Trend.IsBear(),
+
+         bullHTF,
+         bearHTF,
+
+         atr,
+         adx,
+         rsi,
+         score
+      );
+
+      //-------------------------------------------------
+      // Signal
+      //-------------------------------------------------
+
       Signal.Calculate(
          MarketState.IsBull(),
          MarketState.IsBear(),
@@ -184,19 +206,150 @@ Filter.Calculate(
          score
       );
 
-      //=====================================================
-// DECISION LAYER
-//=====================================================
+      //-------------------------------------------------
+      // Final Decision
+      //-------------------------------------------------
+
+      bool finalBuy=
+            allowTrading
+         && Signal.IsBuySignal()
+         && Filter.BuyPassed();
+
+      bool finalSell=
+            allowTrading
+         && Signal.IsSellSignal()
+         && Filter.SellPassed();
+
+      //-------------------------------------------------
+      // Signal Text
+      //-------------------------------------------------
+
+      string signal="WAIT";
+
+      if(finalBuy)
+         signal="BUY";
+      else
+      if(finalSell)
+         signal="SELL";
+
+      //-------------------------------------------------
+      // Trend Power
+      //-------------------------------------------------
+
+      double trendPower=
+         Trend.GetTrendPower();
+
+      //-------------------------------------------------
+      // Candle Countdown
+      //-------------------------------------------------
+
+      datetime openTime=
+         iTime(_Symbol,_Period,0);
+
+      int periodSeconds=
+         PeriodSeconds(_Period);
+
+      int candleLeft=
+         (int)(openTime+periodSeconds-TimeCurrent());
+
+      if(candleLeft<0)
+         candleLeft=0;
+
+      //-------------------------------------------------
+      // Market Health
+      //-------------------------------------------------
+
+      string health="WEAK";
+      int quality=score;
+            if(score>=90 && adx>=30)
+      {
+         health="EXCELLENT";
+         quality=95;
+      }
+      else
+      if(score>=80 && adx>=25)
+      {
+         health="VERY GOOD";
+         quality=85;
+      }
+      else
+      if(score>=70)
+      {
+         health="GOOD";
+         quality=75;
+      }
+      else
+      if(score>=60)
+      {
+         health="FAIR";
+         quality=60;
+      }
+      else
+      {
+         health="WEAK";
+         quality=40;
+      }
+
+      //-------------------------------------------------
+      // Signal Reason
+      //-------------------------------------------------
+
+      string reason="";
+
+      if(Trend.IsBull())
+         reason+="✓ Trend Bull\n";
+      else
+      if(Trend.IsBear())
+         reason+="✓ Trend Bear\n";
+      else
+         reason+="• Sideway\n";
+
+      if(MarketState.IsBull())
+         reason+="✓ Market Bull\n";
+      else
+      if(MarketState.IsBear())
+         reason+="✓ Market Bear\n";
+
+      if(adx>=25.0)
+         reason+="✓ ADX Strong\n";
+      else
+         reason+="• ADX Weak\n";
+
+      if(rsi>=50.0 && rsi<=70.0)
+         reason+="✓ RSI Buy Zone\n";
+      else
+      if(rsi>=30.0 && rsi<=50.0)
+         reason+="✓ RSI Sell Zone\n";
+      else
+         reason+="• RSI Neutral\n";
+
+      if(bullHTF)
+         reason+="✓ HTF Bull\n";
+      else
+      if(bearHTF)
+         reason+="✓ HTF Bear\n";
+      else
+         reason+="• HTF Neutral\n";
+
+      if(allowTrading)
+         reason+="✓ Session OK\n";
+      else
+         reason+="• Session Closed\n";
+
+      reason+="✓ Candle Left : ";
+
+      int min=candleLeft/60;
+      int sec=candleLeft%60;
+
+      reason+=StringFormat("%02d:%02d",min,sec);
+
+      //-------------------------------------------------
+      // Output
+      //-------------------------------------------------
+
       datetime signalBar=iTime(_Symbol,_Period,1);
 
-      //------------------------------------------------------
-      // BUY
-      //------------------------------------------------------
-      if(
-   allowTrading &&
-   Signal.IsBuySignal() &&
-   Filter.BuyPassed()
-)
+      if(finalBuy)
       {
          Arrow.DrawBuy(
             signalBar,
@@ -204,17 +357,10 @@ Filter.Calculate(
          );
 
          Alert.Buy(signalBar);
-Push.Buy(signalBar);
+         Push.Buy(signalBar);
       }
 
-      //------------------------------------------------------
-      // SELL
-      //------------------------------------------------------
-     if(
-   allowTrading &&
-   Signal.IsSellSignal() &&
-   Filter.SellPassed()
-)
+      if(finalSell)
       {
          Arrow.DrawSell(
             signalBar,
@@ -222,48 +368,73 @@ Push.Buy(signalBar);
          );
 
          Alert.Sell(signalBar);
-Push.Sell(signalBar);
+         Push.Sell(signalBar);
       }
 
-      //------------------------------------------------------
+      //-------------------------------------------------
       // Dashboard
-      //------------------------------------------------------
-      //=====================================================
-// OUTPUT LAYER
-//=====================================================
+      //-------------------------------------------------
+
       dashboard.SetTrend(
          Trend.GetTrendText()
+      );
+
+      dashboard.SetTrendPower(
+         trendPower
       );
 
       dashboard.SetMarketState(
          MarketState.GetStateText()
       );
 
-      dashboard.SetADX(adx);
+      dashboard.SetSession(
+         allowTrading ? "ON" : "OFF"
+      );
 
-      dashboard.SetRSI(rsi);
+      dashboard.SetHTF(
+         bullHTF ? "BULL" :
+         bearHTF ? "BEAR" : "NONE"
+      );
 
-      dashboard.SetScore(score);
+      dashboard.SetHealth(
+         health
+      );
+
+      dashboard.SetQuality(
+         quality
+      );
+
+      dashboard.SetADX(
+         adx
+      );
+
+      dashboard.SetRSI(
+         rsi
+      );
+
+      dashboard.SetScore(
+         score
+      );
+
+      dashboard.SetCandleLeft(
+         candleLeft
+      );
+
+      dashboard.SetSignal(
+         signal
+      );
+
+      dashboard.SetReason(
+         reason
+      );
 
       dashboard.SetBuySignal(
-
-   allowTrading &&
-
-   Signal.IsBuySignal() &&
-
-   Filter.BuyPassed()
-
-);
+         finalBuy
+      );
 
       dashboard.SetSellSignal(
-
-   allowTrading &&
-
-   Signal.IsSellSignal() &&
-
-   Filter.SellPassed()
-
-);
+         finalSell
+      );
 
       dashboard.Update();
    }
