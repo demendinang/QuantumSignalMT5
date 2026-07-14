@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //| Dashboard.mqh                                                    |
-//| Build 033 - Signal Confidence                                    |
+//| Build 034 - Professional Dashboard                              |
 //+------------------------------------------------------------------+
 #ifndef __DASHBOARD_MQH__
 #define __DASHBOARD_MQH__
@@ -11,6 +11,10 @@ private:
 
    string m_name;
 
+   //--------------------------------------------------
+   // STATUS
+   //--------------------------------------------------
+
    string m_status;
    string m_trend;
    string m_market;
@@ -18,19 +22,33 @@ private:
    string m_htf;
    string m_signal;
 
+   //--------------------------------------------------
+   // MARKET QUALITY
+   //--------------------------------------------------
+
    string m_health;
+   string m_volatility;
 
    int    m_quality;
    int    m_confidence;
 
    double m_trendPower;
 
+   //--------------------------------------------------
+   // INDICATORS
+   //--------------------------------------------------
+
+   double m_atr;
    double m_adx;
    double m_rsi;
 
    int    m_score;
 
    int    m_candleLeft;
+
+   //--------------------------------------------------
+   // SIGNAL
+   //--------------------------------------------------
 
    bool   m_buy;
    bool   m_sell;
@@ -45,20 +63,24 @@ public:
    {
       m_name="QS_Dashboard";
 
-      m_status ="INIT";
-      m_trend  ="UNKNOWN";
-      m_market ="UNKNOWN";
+      m_status="INIT";
+
+      m_trend ="UNKNOWN";
+      m_market="UNKNOWN";
       m_session="OFF";
-      m_htf    ="NONE";
-      m_signal ="WAIT";
+      m_htf="NONE";
 
-      m_health ="UNKNOWN";
+      m_signal="WAIT";
 
-      m_quality    =0;
-      m_confidence =0;
+      m_health="UNKNOWN";
+      m_volatility="NORMAL";
+
+      m_quality=0;
+      m_confidence=0;
 
       m_trendPower=0;
 
+      m_atr=0;
       m_adx=0;
       m_rsi=0;
 
@@ -87,10 +109,33 @@ public:
             0
          );
 
-         ObjectSetInteger(0,m_name,OBJPROP_CORNER,CORNER_LEFT_UPPER);
-         ObjectSetInteger(0,m_name,OBJPROP_XDISTANCE,10);
-         ObjectSetInteger(0,m_name,OBJPROP_YDISTANCE,20);
-         ObjectSetInteger(0,m_name,OBJPROP_FONTSIZE,10);
+         ObjectSetInteger(
+            0,
+            m_name,
+            OBJPROP_CORNER,
+            CORNER_LEFT_UPPER
+         );
+
+         ObjectSetInteger(
+            0,
+            m_name,
+            OBJPROP_XDISTANCE,
+            10
+         );
+
+         ObjectSetInteger(
+            0,
+            m_name,
+            OBJPROP_YDISTANCE,
+            20
+         );
+
+         ObjectSetInteger(
+            0,
+            m_name,
+            OBJPROP_FONTSIZE,
+            10
+         );
 
          ObjectSetString(
             0,
@@ -112,6 +157,8 @@ public:
       ObjectDelete(0,m_name);
    }
 
+   //--------------------------------------------------
+   // SETTERS
    //--------------------------------------------------
 
    void SetStatus(string value)
@@ -162,9 +209,23 @@ public:
 
    //--------------------------------------------------
 
+   void SetSignal(string value)
+   {
+      m_signal=value;
+   }
+
+   //--------------------------------------------------
+
    void SetHealth(string value)
    {
       m_health=value;
+   }
+
+   //--------------------------------------------------
+
+   void SetVolatility(string value)
+   {
+      m_volatility=value;
    }
 
    //--------------------------------------------------
@@ -191,6 +252,13 @@ public:
          value=100;
 
       m_confidence=value;
+   }
+
+   //--------------------------------------------------
+
+   void SetATR(double value)
+   {
+      m_atr=value;
    }
 
    //--------------------------------------------------
@@ -223,15 +291,7 @@ public:
 
       m_candleLeft=value;
    }
-
-   //--------------------------------------------------
-
-   void SetSignal(string value)
-   {
-      m_signal=value;
-   }
-
-   //--------------------------------------------------
+      //--------------------------------------------------
 
    void SetBuySignal(bool value)
    {
@@ -251,7 +311,8 @@ public:
    {
       m_reason=value;
    }
-      //--------------------------------------------------
+
+   //--------------------------------------------------
 
    void Update()
    {
@@ -265,27 +326,29 @@ public:
 
       txt=
       "====================================\n"
-      "      Quantum Signal MT5\n"
+      "        Quantum Signal MT5\n"
       "====================================\n\n"
 
-      +"Trend       : "+m_trend+"\n"
-      +"Trend Pow.  : "+DoubleToString(m_trendPower,0)+"%\n"
-      +"Market      : "+m_market+"\n"
-      +"Session     : "+m_session+"\n"
-      +"HTF         : "+m_htf+"\n\n"
+      +"Trend        : "+m_trend+"\n"
+      +"Trend Power  : "+DoubleToString(m_trendPower,0)+"%\n"
+      +"Market       : "+m_market+"\n"
+      +"Session      : "+m_session+"\n"
+      +"HTF          : "+m_htf+"\n\n"
 
-      +"Health      : "+m_health+"\n"
-      +"Quality     : "+IntegerToString(m_quality)+"%\n"
-      +"Confidence  : "+IntegerToString(m_confidence)+"%\n\n"
+      +"Health       : "+m_health+"\n"
+      +"Quality      : "+IntegerToString(m_quality)+"%\n"
+      +"Confidence   : "+IntegerToString(m_confidence)+"%\n\n"
 
-      +"ADX         : "+DoubleToString(m_adx,1)+"\n"
-      +"RSI         : "+DoubleToString(m_rsi,1)+"\n"
-      +"Score       : "+IntegerToString(m_score)+"\n"
-      +"Candle      : "+candle+"\n\n"
+      +"ATR          : "+DoubleToString(m_atr,2)+"\n"
+      +"Volatility   : "+m_volatility+"\n"
+      +"ADX          : "+DoubleToString(m_adx,1)+"\n"
+      +"RSI          : "+DoubleToString(m_rsi,1)+"\n"
+      +"Score        : "+IntegerToString(m_score)+"\n"
+      +"Candle       : "+candle+"\n\n"
 
-      +"Signal      : "+m_signal+"\n"
-      +"BUY         : "+(m_buy ? "YES" : "NO")+"\n"
-      +"SELL        : "+(m_sell ? "YES" : "NO")+"\n\n"
+      +"Signal       : "+m_signal+"\n"
+      +"BUY          : "+(m_buy ? "YES" : "NO")+"\n"
+      +"SELL         : "+(m_sell ? "YES" : "NO")+"\n\n"
 
       +"------------------------------------\n"
       +"Reason\n"
